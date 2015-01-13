@@ -2,15 +2,10 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#![feature(core)]
+use dom::bindings::utils::Reflector;
 
-#![allow(missing_copy_implementations)]
+#[dom_struct]
+pub struct CanvasGradient {
+    reflector_: Reflector,
+}
 
-extern crate azure;
-extern crate cssparser;
-extern crate geom;
-extern crate gfx;
-extern crate util;
-
-
-pub mod canvas_paint_task;
