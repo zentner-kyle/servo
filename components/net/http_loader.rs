@@ -2,6 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+use cookie_storage::CookieSource;
 use resource_task::{Metadata, TargetedLoadResponse, LoadData, start_sending_opt, ResponseSenders};
 use resource_task::ControlMsg;
 use resource_task::ProgressMsg::{Payload, Done};
@@ -81,7 +82,7 @@ fn load(mut load_data: LoadData, start_chan: Sender<TargetedLoadResponse>, cooki
         };
 
         let (tx, rx) = channel();
-        cookies_chan.send(ControlMsg::GetCookiesForUrl(url.clone(), tx));
+        cookies_chan.send(ControlMsg::GetCookiesForUrl(url.clone(), tx, CookieSource::HTTP));
         if let Some(cookies) = rx.recv().unwrap() {
             let mut v = Vec::new();
             v.push(cookies.into_bytes());
@@ -162,7 +163,8 @@ fn load(mut load_data: LoadData, start_chan: Sender<TargetedLoadResponse>, cooki
         }
 
         if let Some(&SetCookie(ref cookies)) = response.headers.get::<SetCookie>() {
-            cookies_chan.send(ControlMsg::SetCookies(cookies.clone(), url.clone()));
+            cookies_chan.send(ControlMsg::SetCookies(cookies.clone(), url.clone(),
+                                                     CookieSource::HTTP));
         }
 
         if response.status.class() == StatusClass::Redirection {
@@ -192,6 +194,8 @@ fn load(mut load_data: LoadData, start_chan: Sender<TargetedLoadResponse>, cooki
                     info!("redirecting to {}", new_url);
                     url = new_url;
 
+                    // According to https://tools.ietf.org/html/rfc7231#section-6.4.2,
+                    // historically UAs have rewritten POST->GET on 301 and 302 responses.
                     if load_data.method == Method::Post &&
                         (response.status == StatusCode::MovedPermanently ||
                          response.status == StatusCode::Found) {
