@@ -19,7 +19,7 @@ use hyper::header::{Headers, Header, HeaderFormat, HeaderView};
 use hyper::header::shared::util as header_util;
 use hyper::client::Request;
 use hyper::mime::{Mime, TopLevel, SubLevel};
-use hyper::header::common::{ContentType, Host};
+use hyper::header::{ContentType, Host};
 use hyper::method::Method;
 use hyper::status::StatusClass::Success;
 

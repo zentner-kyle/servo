@@ -15,14 +15,14 @@ use cookie;
 
 use util::task::spawn_named;
 
-use hyper::header::common::UserAgent;
+use hyper::header::UserAgent;
 use hyper::header::{Headers, Header, SetCookie};
 use hyper::http::RawStatus;
 use hyper::method::Method;
 use hyper::mime::{Mime, Attr};
 use url::Url;
 
-use std::borrow::ToOwned;
+use std::borrow::{ToOwned, IntoCow};
 use std::sync::mpsc::{channel, Receiver, Sender};
 use std::thunk::Invoke;
 
@@ -99,7 +99,7 @@ impl Metadata {
             charset:      None,
             headers: None,
             // http://fetch.spec.whatwg.org/#concept-response-status-message
-            status: Some(RawStatus(200, "OK".to_owned())),
+            status: Some(RawStatus(200, "OK".into_cow())),
         }
     }
 

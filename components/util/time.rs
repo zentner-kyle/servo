@@ -8,7 +8,7 @@ use collections::BTreeMap;
 use std::borrow::ToOwned;
 use std::cmp::Ordering;
 use std::f64;
-use std::io::timer::sleep;
+use std::old_io::timer::sleep;
 use std::iter::AdditiveIterator;
 use std::num::Float;
 use std::sync::mpsc::{Sender, channel, Receiver};

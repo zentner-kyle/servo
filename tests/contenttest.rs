@@ -18,9 +18,9 @@ use test::{AutoColor, TestOpts, run_tests_console, TestDesc, TestDescAndFn, DynT
 use test::ShouldFail;
 use getopts::{getopts, reqopt};
 use std::{os, str};
-use std::io::fs;
-use std::io::Reader;
-use std::io::process::{Command, Ignored, CreatePipe, InheritFd, ExitStatus};
+use std::old_io::fs;
+use std::old_io::Reader;
+use std::old_io::process::{Command, Ignored, CreatePipe, InheritFd, ExitStatus};
 use std::thunk::Thunk;
 use regex::Regex;
 

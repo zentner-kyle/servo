@@ -60,7 +60,7 @@ fn load(load_data: LoadData, start_chan: Sender<TargetedLoadResponse>) {
 
     // Parse the content type using rust-http.
     // FIXME: this can go into an infinite loop! (rust-http #25)
-    let content_type: Option<Mime> = ct_str.parse();
+    let content_type: Option<Mime> = ct_str.parse().ok();
     metadata.set_content_type(content_type.as_ref());
 
     let progress_chan = start_sending(senders, metadata);

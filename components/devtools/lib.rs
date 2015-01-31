@@ -43,8 +43,8 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 use std::sync::mpsc::{channel, Receiver, Sender};
 use std::sync::mpsc::TryRecvError::{Disconnected, Empty};
-use std::io::{TcpListener, TcpStream};
-use std::io::{Acceptor, Listener, TimedOut};
+use std::old_io::{TcpListener, TcpStream};
+use std::old_io::{Acceptor, Listener, TimedOut};
 use std::sync::{Arc, Mutex};
 
 mod actor;

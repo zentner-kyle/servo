@@ -33,7 +33,7 @@ use encoding::label::encoding_from_whatwg_label;
 use encoding::types::{DecoderTrap, Encoding, EncodingRef, EncoderTrap};
 
 use hyper::header::Headers;
-use hyper::header::common::{Accept, ContentLength, ContentType};
+use hyper::header::{Accept, ContentLength, ContentType};
 use hyper::header::quality_item::QualityItem;
 use hyper::http::RawStatus;
 use hyper::mime::{self, Mime};
@@ -55,7 +55,7 @@ use std::borrow::ToOwned;
 use std::cell::Cell;
 use std::sync::mpsc::{Sender, Receiver, channel};
 use std::default::Default;
-use std::io::Timer;
+use std::old_io::Timer;
 use std::str::FromStr;
 use std::time::duration::Duration;
 use time;
@@ -990,7 +990,7 @@ impl<'a> PrivateXMLHttpRequestHelpers for JSRef<'a, XMLHttpRequest> {
         // http://fetch.spec.whatwg.org/#concept-response-header-list
         use std::fmt;
         use hyper::header::{Header, HeaderFormat};
-        use hyper::header::common::SetCookie;
+        use hyper::header::SetCookie;
 
         // a dummy header so we can use headers.remove::<SetCookie2>()
         #[derive(Clone)]

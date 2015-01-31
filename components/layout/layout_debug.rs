@@ -13,7 +13,7 @@ use serialize::json;
 
 use std::borrow::ToOwned;
 use std::cell::RefCell;
-use std::io::File;
+use std::old_io::File;
 use std::sync::atomic::{AtomicUint, Ordering, ATOMIC_UINT_INIT};
 
 thread_local!(static STATE_KEY: RefCell<Option<State>> = RefCell::new(None));

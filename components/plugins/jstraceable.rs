@@ -41,7 +41,7 @@ pub fn expand_jstraceable(cx: &mut ExtCtxt, span: Span, mitem: &MetaItem, item: 
         path: ty::Path::new(vec!("dom","bindings","trace","JSTraceable")),
         additional_bounds: Vec::new(),
         generics: ty::LifetimeBounds::empty(),
-        methods: vec!(
+        methods: vec![
             MethodDef {
                 name: "trace",
                 generics: ty::LifetimeBounds::empty(),
@@ -53,7 +53,8 @@ pub fn expand_jstraceable(cx: &mut ExtCtxt, span: Span, mitem: &MetaItem, item: 
                                                                                   InternedString::new("always")))),
                 combine_substructure: combine_substructure(box jstraceable_substructure)
             }
-        )
+        ],
+        associated_types: vec![],
     };
     trait_def.expand(cx, mitem, item, |:a| push(a))
 }

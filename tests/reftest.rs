@@ -16,10 +16,10 @@ extern crate regex;
 extern crate url;
 
 use std::ascii::AsciiExt;
-use std::io;
-use std::io::{File, Reader, Command, IoResult};
-use std::io::process::ExitStatus;
-use std::io::fs::PathExtensions;
+use std::old_io as io;
+use std::old_io::{File, Reader, Command, IoResult};
+use std::old_io::process::ExitStatus;
+use std::old_io::fs::PathExtensions;
 use std::os;
 use std::path::Path;
 use std::thunk::Thunk;

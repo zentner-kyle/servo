@@ -8,7 +8,7 @@
 
 use serialize::{json, Encodable};
 use serialize::json::Json;
-use std::io::{IoError, OtherIoError, EndOfFile, TcpStream, IoResult};
+use std::old_io::{IoError, OtherIoError, EndOfFile, TcpStream, IoResult};
 use std::num;
 
 pub trait JsonPacketStream {
