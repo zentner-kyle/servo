@@ -11,7 +11,7 @@ use log;
 use std::collections::HashSet;
 use std::error::Error;
 use hyper::client::Request;
-use hyper::header::common::{ContentLength, ContentType, Host, Location, SetCookie};
+use hyper::header::common::{ContentLength, ContentType, Host, Location};
 use hyper::method::Method;
 use hyper::status::{StatusCode, StatusClass};
 use std::io::Reader;
@@ -162,9 +162,14 @@ fn load(mut load_data: LoadData, start_chan: Sender<TargetedLoadResponse>, cooki
             }
         }
 
-        if let Some(&SetCookie(ref cookies)) = response.headers.get::<SetCookie>() {
-            cookies_chan.send(ControlMsg::SetCookies(cookies.clone(), url.clone(),
-                                                     CookieSource::HTTP));
+        if let Some(cookies) = response.headers.get_raw("set-cookie") {
+            for cookie in cookies.iter() {
+                if let Ok(cookies) = String::from_utf8(cookie.clone()) {
+                    cookies_chan.send(ControlMsg::SetCookiesForUrl(url.clone(),
+                                                                   cookies,
+                                                                   CookieSource::HTTP));
+                }
+            }
         }
 
         if response.status.class() == StatusClass::Redirection {
