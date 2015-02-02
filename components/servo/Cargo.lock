@@ -101,7 +101,7 @@ dependencies = [
 [[package]]
 name = "cookie"
 version = "0.1.8"
-source = "registry+https://github.com/rust-lang/crates.io-index"
+source = "git+https://github.com/servo/cookie-rs?branch=lenientparse_backport#47ffa4d3c6f85d28f222d6e1d54635fff5622ea3"
 dependencies = [
  "openssl 0.2.16 (registry+https://github.com/rust-lang/crates.io-index)",
  "rustc-serialize 0.2.7 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -429,9 +429,9 @@ source = "git+https://github.com/servo/html5ever#d35dfaaf0d85007057a299afc370d07
 [[package]]
 name = "hyper"
 version = "0.1.0"
-source = "git+https://github.com/servo/hyper?branch=servo#248a6f29086baa841eb30c88540dca3196accae4"
+source = "git+https://github.com/servo/hyper?branch=old_servo_new_cookies#14b7eb9c67226127b64d279dbd6f21e524e9d052"
 dependencies = [
- "cookie 0.1.8 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cookie 0.1.8 (git+https://github.com/servo/cookie-rs?branch=lenientparse_backport)",
  "log 0.1.9 (registry+https://github.com/rust-lang/crates.io-index)",
  "mime 0.0.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "mucell 0.1.10 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -566,7 +566,7 @@ dependencies = [
  "azure 0.1.0 (git+https://github.com/servo/rust-azure)",
  "core_foundation 0.1.0 (git+https://github.com/servo/rust-core-foundation)",
  "geom 0.1.0 (git+https://github.com/servo/rust-geom)",
- "hyper 0.1.0 (git+https://github.com/servo/hyper?branch=servo)",
+ "hyper 0.1.0 (git+https://github.com/servo/hyper?branch=old_servo_new_cookies)",
  "io_surface 0.1.0 (git+https://github.com/servo/rust-io-surface)",
  "layers 0.1.0 (git+https://github.com/servo/rust-layers)",
  "style 0.0.1",
@@ -583,9 +583,9 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 name = "net"
 version = "0.0.1"
 dependencies = [
- "cookie 0.1.8 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cookie 0.1.8 (git+https://github.com/servo/cookie-rs?branch=lenientparse_backport)",
  "geom 0.1.0 (git+https://github.com/servo/rust-geom)",
- "hyper 0.1.0 (git+https://github.com/servo/hyper?branch=servo)",
+ "hyper 0.1.0 (git+https://github.com/servo/hyper?branch=old_servo_new_cookies)",
  "png 0.1.0 (git+https://github.com/servo/rust-png)",
  "stb_image 0.1.0 (git+https://github.com/servo/rust-stb-image)",
  "time 0.1.12 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -680,7 +680,7 @@ dependencies = [
  "geom 0.1.0 (git+https://github.com/servo/rust-geom)",
  "gfx 0.0.1",
  "html5ever 0.0.0 (git+https://github.com/servo/html5ever)",
- "hyper 0.1.0 (git+https://github.com/servo/hyper?branch=servo)",
+ "hyper 0.1.0 (git+https://github.com/servo/hyper?branch=old_servo_new_cookies)",
  "js 0.1.0 (git+https://github.com/servo/rust-mozjs)",
  "msg 0.0.1",
  "net 0.0.1",
