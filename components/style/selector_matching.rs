@@ -523,7 +523,7 @@ struct Rule {
 
 /// A property declaration together with its precedence among rules of equal specificity so that
 /// we can sort them.
-#[derive(Clone, Show)]
+#[derive(Clone, Debug)]
 pub struct DeclarationBlock {
     pub declarations: Arc<Vec<PropertyDeclaration>>,
     source_order: uint,

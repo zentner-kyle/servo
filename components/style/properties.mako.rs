@@ -9,7 +9,7 @@
 use std::ascii::AsciiExt;
 use std::borrow::ToOwned;
 use std::fmt;
-use std::fmt::Show;
+use std::fmt::Debug;
 use std::sync::Arc;
 
 use util::logical_geometry::{WritingMode, LogicalMargin};
@@ -506,7 +506,7 @@ pub mod longhands {
                 Length(Au),
                 Number(CSSFloat),
             }
-            impl fmt::Show for T {
+            impl fmt::Debug for T {
                 fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
                     match self {
                         &T::Normal => write!(f, "normal"),
@@ -594,7 +594,7 @@ pub mod longhands {
                 Length(Au),
                 Percentage(CSSFloat),
             }
-            impl fmt::Show for T {
+            impl fmt::Debug for T {
                 fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
                     match self {
                         % for keyword in vertical_align_keywords:
@@ -1011,7 +1011,7 @@ pub mod longhands {
                 }
             }
             pub type T = Vec<FontFamily>;
-            /*impl fmt::Show for T {
+            /*impl fmt::Debug for T {
                 fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
                     for font in self.iter() {
                         write!(f, "{}", font);
@@ -1115,7 +1115,7 @@ pub mod longhands {
                     Weight${weight},
                 % endfor
             }
-            impl fmt::Show for T {
+            impl fmt::Debug for T {
                 fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
                     match self {
                         % for weight in range(100, 901, 100):
@@ -1537,7 +1537,7 @@ pub mod longhands {
             use text_writer::{self, TextWriter};
             use util::cursor::Cursor;
 
-            #[derive(Clone, PartialEq, Eq, Copy, Show)]
+            #[derive(Clone, PartialEq, Eq, Copy, Debug)]
             pub enum T {
                 AutoCursor,
                 SpecifiedCursor(Cursor),
@@ -1675,7 +1675,7 @@ pub mod longhands {
                 pub inset: bool,
             }
 
-            impl fmt::Show for BoxShadow {
+            impl fmt::Debug for BoxShadow {
                 fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
                     if self.inset {
                         let _ = write!(f, "inset ");
@@ -1789,7 +1789,7 @@ pub mod longhands {
         pub mod computed_value {
             use util::geometry::Au;
 
-            #[derive(Clone, PartialEq, Eq, Copy, Show)]
+            #[derive(Clone, PartialEq, Eq, Copy, Debug)]
             pub struct ClipRect {
                 pub top: Au,
                 pub right: Option<Au>,
@@ -1800,7 +1800,7 @@ pub mod longhands {
             pub type T = Option<ClipRect>;
         }
 
-        #[derive(Clone, Show, PartialEq, Copy)]
+        #[derive(Clone, Debug, PartialEq, Copy)]
         pub struct SpecifiedClipRect {
             pub top: specified::Length,
             pub right: Option<specified::Length>,
@@ -1909,7 +1909,7 @@ pub mod longhands {
             use text_writer::{self, TextWriter};
 
             // TODO(pcwalton): `blur`, `drop-shadow`
-            #[derive(Clone, PartialEq, Show)]
+            #[derive(Clone, PartialEq, Debug)]
             pub enum Filter {
                 Brightness(CSSFloat),
                 Contrast(CSSFloat),
@@ -1941,7 +1941,7 @@ pub mod longhands {
                 }
             }
 
-            #[derive(Clone, PartialEq, Show)]
+            #[derive(Clone, PartialEq, Debug)]
             pub struct T {
                 pub filters: Vec<Filter>,
             }
@@ -2556,7 +2556,7 @@ mod property_bit_field {
 
 /// Declarations are stored in reverse order.
 /// Overridden declarations are skipped.
-#[derive(Show, PartialEq)]
+#[derive(Debug, PartialEq)]
 pub struct PropertyDeclarationBlock {
     pub important: Arc<Vec<PropertyDeclaration>>,
     pub normal: Arc<Vec<PropertyDeclaration>>,
@@ -2654,7 +2654,7 @@ fn deduplicate_property_declarations(declarations: Vec<PropertyDeclaration>)
 }
 
 
-#[derive(Copy, PartialEq, Eq, Show)]
+#[derive(Copy, PartialEq, Eq, Debug)]
 pub enum CSSWideKeyword {
     InitialKeyword,
     InheritKeyword,
@@ -2673,7 +2673,7 @@ impl CSSWideKeyword {
 }
 
 
-#[derive(Clone, PartialEq, Eq, Copy, Show)]
+#[derive(Clone, PartialEq, Eq, Copy, Debug)]
 pub enum DeclaredValue<T> {
     SpecifiedValue(T),
     Initial,
@@ -2821,7 +2821,7 @@ impl PropertyDeclaration {
     }
 }
 
-impl Show for PropertyDeclaration {
+impl Debug for PropertyDeclaration {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}: {}", self.name(), self.value())
     }

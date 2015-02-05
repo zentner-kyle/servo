@@ -19,7 +19,7 @@ use media_queries::{self, Device, MediaQueryList, parse_media_query_list};
 use font_face::{FontFaceRule, Source, parse_font_face_block, iter_font_face_rules_inner};
 
 
-#[derive(Clone, PartialEq, Eq, Copy, Show)]
+#[derive(Clone, PartialEq, Eq, Copy, Debug)]
 pub enum Origin {
     UserAgent,
     Author,
@@ -27,7 +27,7 @@ pub enum Origin {
 }
 
 
-#[derive(Show, PartialEq)]
+#[derive(Debug, PartialEq)]
 pub struct Stylesheet {
     /// List of rules in the order they were found (important for
     /// cascading order)
@@ -36,7 +36,7 @@ pub struct Stylesheet {
 }
 
 
-#[derive(Show, PartialEq)]
+#[derive(Debug, PartialEq)]
 pub enum CSSRule {
     Charset(String),
     Namespace(Option<String>, Namespace),
@@ -45,14 +45,14 @@ pub enum CSSRule {
     FontFace(FontFaceRule),
 }
 
-#[derive(Show, PartialEq)]
+#[derive(Debug, PartialEq)]
 pub struct MediaRule {
     pub media_queries: MediaQueryList,
     pub rules: Vec<CSSRule>,
 }
 
 
-#[derive(Show, PartialEq)]
+#[derive(Debug, PartialEq)]
 pub struct StyleRule {
     pub selectors: Vec<Selector>,
     pub declarations: PropertyDeclarationBlock,
