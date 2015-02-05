@@ -443,7 +443,7 @@ macro_rules! def_small_vector(
             }
         }
 
-        impl<T: fmt::Show> fmt::Show for $name<T> {
+        impl<T: fmt::Debug> fmt::Debug for $name<T> {
             fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
                 write!(f, "{:?}", self.as_slice())
             }

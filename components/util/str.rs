@@ -324,7 +324,7 @@ pub fn parse_legacy_color(mut input: &str) -> Result<RGBA,()> {
 }
 
 
-#[derive(Clone, Eq, PartialEq, Hash, Show)]
+#[derive(Clone, Eq, PartialEq, Hash, Debug)]
 pub struct LowercaseString {
     inner: String,
 }
