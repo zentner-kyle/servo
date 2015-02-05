@@ -7,7 +7,8 @@
 #![feature(int_uint)]
 #![feature(box_syntax)]
 #![feature(optin_builtin_traits)]
-#![feature(core, rustc_private)]
+#![feature(core, rustc_private, hash, alloc)]
+#![feature(collections, libc, std_misc)]
 
 #![deny(unused_imports)]
 #![deny(unused_variables)]

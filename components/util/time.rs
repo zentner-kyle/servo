@@ -46,7 +46,7 @@ impl Formatable for Option<TimerMetadata> {
             &Some(ref meta) => {
                 let url = meta.url.as_slice();
                 let url = if url.len() > 30 {
-                    url.slice_to(30)
+                    &url[..30]
                 } else {
                     url
                 };
