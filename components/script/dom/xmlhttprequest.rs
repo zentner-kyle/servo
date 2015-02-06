@@ -33,8 +33,7 @@ use encoding::label::encoding_from_whatwg_label;
 use encoding::types::{DecoderTrap, Encoding, EncodingRef, EncoderTrap};
 
 use hyper::header::Headers;
-use hyper::header::{Accept, ContentLength, ContentType};
-use hyper::header::quality_item::QualityItem;
+use hyper::header::{Accept, ContentLength, ContentType, QualityItem};
 use hyper::http::RawStatus;
 use hyper::mime::{self, Mime};
 use hyper::method::Method;

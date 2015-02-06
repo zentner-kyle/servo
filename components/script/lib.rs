@@ -29,6 +29,7 @@ extern crate js;
 extern crate libc;
 extern crate msg;
 extern crate net;
+extern crate "rustc-serialize" as rustc_serialize;
 extern crate serialize;
 extern crate time;
 extern crate canvas;

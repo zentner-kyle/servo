@@ -16,7 +16,7 @@ use time;
 use time::{now, Timespec};
 
 use hyper::header::{Headers, Header, HeaderFormat, HeaderView};
-use hyper::header::shared::util as header_util;
+use hyper::header::parsing as header_parsing;
 use hyper::client::Request;
 use hyper::mime::{Mime, TopLevel, SubLevel};
 use hyper::header::{ContentType, Host};
@@ -393,7 +393,7 @@ impl Header for AccessControlRequestMethod {
     }
 
     fn parse_header(raw: &[Vec<u8>]) -> Option<AccessControlRequestMethod> {
-        header_util::from_one_raw_str(raw).map(AccessControlRequestMethod)
+        header_parsing::from_one_raw_str(raw).map(AccessControlRequestMethod)
     }
 }
 
@@ -414,14 +414,14 @@ impl Header for AccessControlRequestHeaders {
     }
 
     fn parse_header(raw: &[Vec<u8>]) -> Option<AccessControlRequestHeaders> {
-        header_util::from_comma_delimited(raw).map(AccessControlRequestHeaders)
+        header_parsing::from_comma_delimited(raw).map(AccessControlRequestHeaders)
     }
 }
 
 impl HeaderFormat for AccessControlRequestHeaders {
     fn fmt_header(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let AccessControlRequestHeaders(ref parts) = *self;
-        header_util::fmt_comma_delimited(f, parts.as_slice())
+        header_parsing::fmt_comma_delimited(f, parts.as_slice())
     }
 }
 
@@ -435,14 +435,14 @@ impl Header for AccessControlAllowMethods {
     }
 
     fn parse_header(raw: &[Vec<u8>]) -> Option<AccessControlAllowMethods> {
-        header_util::from_comma_delimited(raw).map(AccessControlAllowMethods)
+        header_parsing::from_comma_delimited(raw).map(AccessControlAllowMethods)
     }
 }
 
 impl HeaderFormat for AccessControlAllowMethods {
     fn fmt_header(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let AccessControlAllowMethods(ref parts) = *self;
-        header_util::fmt_comma_delimited(f, parts.as_slice())
+        header_parsing::fmt_comma_delimited(f, parts.as_slice())
     }
 }
 
@@ -456,14 +456,14 @@ impl Header for AccessControlAllowHeaders {
     }
 
     fn parse_header(raw: &[Vec<u8>]) -> Option<AccessControlAllowHeaders> {
-        header_util::from_comma_delimited(raw).map(AccessControlAllowHeaders)
+        header_parsing::from_comma_delimited(raw).map(AccessControlAllowHeaders)
     }
 }
 
 impl HeaderFormat for AccessControlAllowHeaders {
     fn fmt_header(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let AccessControlAllowHeaders(ref parts) = *self;
-        header_util::fmt_comma_delimited(f, parts.as_slice())
+        header_parsing::fmt_comma_delimited(f, parts.as_slice())
     }
 }
 
@@ -514,7 +514,7 @@ impl Header for AccessControlMaxAge {
     }
 
     fn parse_header(raw: &[Vec<u8>]) -> Option<AccessControlMaxAge> {
-        header_util::from_one_raw_str(raw).map(AccessControlMaxAge)
+        header_parsing::from_one_raw_str(raw).map(AccessControlMaxAge)
     }
 }
 

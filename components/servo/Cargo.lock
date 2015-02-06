@@ -373,6 +373,7 @@ dependencies = [
 name = "glutin_app"
 version = "0.0.1"
 dependencies = [
+ "bitflags 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "cgl 0.0.1 (git+https://github.com/servo/rust-cgl)",
  "compositing 0.0.1",
  "egl 0.1.0 (git+https://github.com/servo/rust-egl)",
@@ -707,6 +708,7 @@ dependencies = [
  "msg 0.0.1",
  "net 0.0.1",
  "plugins 0.0.1",
+ "rustc-serialize 0.2.12 (registry+https://github.com/rust-lang/crates.io-index)",
  "script_traits 0.0.1",
  "string_cache 0.0.0 (git+https://github.com/servo/string-cache)",
  "string_cache_macros 0.0.0 (git+https://github.com/servo/string-cache)",
