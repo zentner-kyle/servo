@@ -106,8 +106,9 @@ impl Stylesheet {
                     rules.push(rule);
                 }
                 Err(range) => {
+                    let pos = range.start;
                     let message = format!("Invalid rule: '{}'", iter.input.slice(range));
-                    log_css_error(iter.input, range.start, &*message);
+                    log_css_error(iter.input, pos, &*message);
                 }
             }
         }
@@ -126,8 +127,9 @@ fn parse_nested_rules(context: &ParserContext, input: &mut Parser) -> Vec<CSSRul
         match result {
             Ok(rule) => rules.push(rule),
             Err(range) => {
+                let pos = range.start;
                 let message = format!("Unsupported rule: '{}'", iter.input.slice(range));
-                log_css_error(iter.input, range.start, &*message);
+                log_css_error(iter.input, pos, &*message);
             }
         }
     }
