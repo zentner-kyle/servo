@@ -372,6 +372,7 @@ dependencies = [
 name = "glutin_app"
 version = "0.0.1"
 dependencies = [
+ "bitflags 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "cgl 0.0.1 (git+https://github.com/servo/rust-cgl)",
  "compositing 0.0.1",
  "egl 0.1.0 (git+https://github.com/servo/rust-egl)",
@@ -448,7 +449,7 @@ dependencies = [
 [[package]]
 name = "js"
 version = "0.1.0"
-source = "git+https://github.com/servo/rust-mozjs#8f39e40226ec9a9c020665b94d545051c3d16e18"
+source = "git+https://github.com/servo/rust-mozjs#f01d85186415afdaded8179ba7455534931778ca"
 dependencies = [
  "mozjs-sys 0.0.0 (git+https://github.com/servo/mozjs)",
 ]
@@ -499,8 +500,10 @@ dependencies = [
  "geom 0.1.0 (git+https://github.com/servo/rust-geom)",
  "gfx 0.0.1",
  "layout_traits 0.0.1",
+ "msg 0.0.1",
  "net 0.0.1",
  "plugins 0.0.1",
+ "png 0.1.0 (git+https://github.com/servo/rust-png)",
  "script 0.0.1",
  "script_traits 0.0.1",
  "string_cache 0.0.0 (git+https://github.com/servo/string-cache)",
@@ -723,6 +726,7 @@ dependencies = [
  "msg 0.0.1",
  "net 0.0.1",
  "plugins 0.0.1",
+ "rustc-serialize 0.2.12 (registry+https://github.com/rust-lang/crates.io-index)",
  "script_traits 0.0.1",
  "string_cache 0.0.0 (git+https://github.com/servo/string-cache)",
  "string_cache_macros 0.0.0 (git+https://github.com/servo/string-cache)",
