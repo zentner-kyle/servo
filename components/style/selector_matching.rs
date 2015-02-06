@@ -5,7 +5,6 @@
 use std::ascii::AsciiExt;
 use std::cmp::Ordering;
 use std::collections::HashMap;
-use std::hash::Hash;
 use std::sync::Arc;
 
 use url::Url;
