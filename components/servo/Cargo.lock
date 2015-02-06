@@ -3,6 +3,7 @@ name = "servo"
 version = "0.0.1"
 dependencies = [
  "android_glue 0.0.1",
+ "bitflags 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "compositing 0.0.1",
  "devtools 0.0.1",
  "gfx 0.0.1",

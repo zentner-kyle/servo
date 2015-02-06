@@ -11,7 +11,6 @@
 #![deny(unused_variables)]
 
 extern crate getopts;
-extern crate regex;
 extern crate test;
 
 use test::{AutoColor, TestOpts, run_tests_console, TestDesc, TestDescAndFn, DynTestFn, DynTestName};
@@ -21,13 +20,13 @@ use std::{os, str};
 use std::old_io::fs;
 use std::old_io::Reader;
 use std::old_io::process::{Command, Ignored, CreatePipe, InheritFd, ExitStatus};
+use std::old_path::Path;
 use std::thunk::Thunk;
-use regex::Regex;
 
 #[derive(Clone)]
 struct Config {
     source_dir: String,
-    filter: Option<Regex>
+    filter: Option<String>
 }
 
 fn main() {
@@ -52,7 +51,7 @@ fn parse_config(args: Vec<String>) -> Config {
 
     Config {
         source_dir: matches.opt_str("source-dir").unwrap(),
-        filter: matches.free.as_slice().first().map(|&:s| Regex::new(s.as_slice()).unwrap())
+        filter: matches.free.first().map(|s| s.clone())
     }
 }
 
@@ -62,16 +61,9 @@ fn test_options(config: Config) -> TestOpts {
         run_ignored: false,
         run_tests: true,
         run_benchmarks: false,
-        ratchet_metrics: None,
-        ratchet_noise_percent: None,
-        save_metrics: None,
-        test_shard: None,
         logfile: None,
         nocapture: false,
         color: AutoColor,
-        show_boxplot: false,
-        boxplot_width: 0,
-        show_all_stats: false,
     }
 }
 
