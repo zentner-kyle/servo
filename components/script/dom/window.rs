@@ -138,7 +138,7 @@ pub fn base64_btoa(btoa: DOMString) -> Fallible<DOMString> {
 // http://www.whatwg.org/html/#atob
 pub fn base64_atob(atob: DOMString) -> Fallible<DOMString> {
     // "Let input be the string being parsed."
-    let mut input = atob.as_slice();
+    let input = atob.as_slice();
 
     // "Remove all space characters from input."
     // serialize::base64::from_base64 ignores \r and \n,
@@ -150,7 +150,7 @@ pub fn base64_atob(atob: DOMString) -> Fallible<DOMString> {
     let without_spaces = input.chars()
         .filter(|&c| ! is_html_space(c))
         .collect::<String>();
-    input = without_spaces.as_slice();
+    let mut input = without_spaces.as_slice();
 
     // "If the length of input divides by 4 leaving no remainder, then:
     //  if input ends with one or two U+003D EQUALS SIGN (=) characters,

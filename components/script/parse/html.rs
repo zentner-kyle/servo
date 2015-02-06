@@ -163,6 +163,10 @@ impl<'a> TreeSink for servohtmlparser::Sink {
         let script: Option<JSRef<HTMLScriptElement>> = HTMLScriptElementCast::to_ref(node.r());
         script.map(|script| script.prepare());
     }
+
+    fn reparent_children(&mut self, _node: JS<Node>, _new_parent: JS<Node>) {
+        panic!("unimplemented")
+    }
 }
 
 pub fn parse_html(document: JSRef<Document>,

@@ -1404,7 +1404,7 @@ impl<'a> style::node::TElement<'a> for JSRef<'a, Element> {
 
         has_class(self, name)
     }
-    fn each_class<F>(self, callback: F)
+    fn each_class<F>(self, mut callback: F)
         where F: FnMut(&Atom)
     {
         match self.get_attribute(ns!(""), &atom!("class")).root() {

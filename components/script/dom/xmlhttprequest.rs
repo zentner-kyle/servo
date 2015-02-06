@@ -829,7 +829,7 @@ impl<'a> PrivateXMLHttpRequestHelpers for JSRef<'a, XMLHttpRequest> {
                 // Substep 2
                 status.map(|RawStatus(code, reason)| {
                     self.status.set(code);
-                    *self.status_text.borrow_mut() = ByteString::new(reason.into_bytes());
+                    *self.status_text.borrow_mut() = ByteString::new(reason.into_owned().into_bytes());
                 });
                 headers.as_ref().map(|h| *self.response_headers.borrow_mut() = h.clone());
 

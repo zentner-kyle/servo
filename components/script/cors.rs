@@ -160,6 +160,7 @@ impl CORSRequest {
         }
         cors_response.headers = response.headers.clone();
         // Substeps 1-3 (parsing rules: http://fetch.spec.whatwg.org/#http-new-header-syntax)
+        let methods_substep4 = [self.method.clone()];
         let mut methods = match response.headers.get() {
             Some(&AccessControlAllowMethods(ref v)) => v.as_slice(),
             _ => return error
@@ -169,7 +170,6 @@ impl CORSRequest {
             _ => return error
         };
         // Substep 4
-        let methods_substep4 = [self.method.clone()];
         if methods.len() == 0 || preflight.mode == RequestMode::ForcedPreflight {
             methods = methods_substep4.as_slice();
         }
