@@ -1020,10 +1020,7 @@ impl RawLayoutNodeHelpers for Node {
 //
 
 pub type ChildElementIterator<'a> =
-    Peekable<JSRef<'a, Element>,
-             FilterMap<JSRef<'a, Node>,
-                       JSRef<'a, Element>,
-                       NodeChildrenIterator<'a>,
+    Peekable<FilterMap<NodeChildrenIterator<'a>,
                        fn(JSRef<Node>) -> Option<JSRef<Element>>>>;
 
 pub struct NodeChildrenIterator<'a> {

@@ -10,7 +10,7 @@
 //! with CORSRequest being expanded into FetchRequest (etc)
 
 use std::ascii::AsciiExt;
-use std::fmt::{self, Show};
+use std::fmt::{self, Show, Display};
 use std::str::from_utf8;
 use time;
 use time::{now, Timespec};
@@ -388,7 +388,7 @@ struct AccessControlRequestMethod(pub Method);
 
 impl Header for AccessControlRequestMethod {
     #[inline]
-    fn header_name(_: Option<AccessControlRequestMethod>) -> &'static str {
+    fn header_name() -> &'static str {
         "Access-Control-Request-Method"
     }
 
@@ -409,7 +409,7 @@ struct AccessControlRequestHeaders(pub Vec<String>);
 
 impl Header for AccessControlRequestHeaders {
     #[inline]
-    fn header_name(_: Option<AccessControlRequestHeaders>) -> &'static str {
+    fn header_name() -> &'static str {
         "Access-Control-Request-Headers"
     }
 
@@ -430,7 +430,7 @@ struct AccessControlAllowMethods(pub Vec<Method>);
 
 impl Header for AccessControlAllowMethods {
     #[inline]
-    fn header_name(_: Option<AccessControlAllowMethods>) -> &'static str {
+    fn header_name() -> &'static str {
         "Access-Control-Allow-Methods"
     }
 
@@ -451,7 +451,7 @@ struct AccessControlAllowHeaders(pub Vec<String>);
 
 impl Header for AccessControlAllowHeaders {
     #[inline]
-    fn header_name(_: Option<AccessControlAllowHeaders>) -> &'static str {
+    fn header_name() -> &'static str {
         "Access-Control-Allow-Headers"
     }
 
@@ -476,7 +476,7 @@ enum AccessControlAllowOrigin {
 
 impl Header for AccessControlAllowOrigin {
     #[inline]
-    fn header_name(_: Option<AccessControlAllowOrigin>) -> &'static str {
+    fn header_name() -> &'static str {
         "Access-Control-Allow-Origin"
     }
 
@@ -509,7 +509,7 @@ struct AccessControlMaxAge(pub u32);
 
 impl Header for AccessControlMaxAge {
     #[inline]
-    fn header_name(_: Option<AccessControlMaxAge>) -> &'static str {
+    fn header_name() -> &'static str {
         "Access-Control-Max-Age"
     }
 

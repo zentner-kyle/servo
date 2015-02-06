@@ -55,7 +55,8 @@ impl SinkHelpers for servohtmlparser::Sink {
     }
 }
 
-impl<'a> TreeSink<JS<Node>> for servohtmlparser::Sink {
+impl<'a> TreeSink for servohtmlparser::Sink {
+    type Handle = JS<Node>;
     fn get_document(&mut self) -> JS<Node> {
         let doc = self.document.root();
         let node: JSRef<Node> = NodeCast::from_ref(doc.r());

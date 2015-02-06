@@ -360,8 +360,8 @@ impl<'a> XMLHttpRequestMethods for JSRef<'a, XMLHttpRequest> {
             match upper.as_slice() {
                 "DELETE" | "GET" | "HEAD" | "OPTIONS" |
                 "POST" | "PUT" | "CONNECT" | "TRACE" |
-                "TRACK" => upper.parse(),
-                _ => s.parse()
+                "TRACK" => upper.parse().ok(),
+                _ => s.parse().ok()
             }
         });
         // Step 2
@@ -995,7 +995,7 @@ impl<'a> PrivateXMLHttpRequestHelpers for JSRef<'a, XMLHttpRequest> {
         #[derive(Clone)]
         struct SetCookie2;
         impl Header for SetCookie2 {
-            fn header_name(_: Option<SetCookie2>) -> &'static str {
+            fn header_name() -> &'static str {
                 "set-cookie2"
             }
 
