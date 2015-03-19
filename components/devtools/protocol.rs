@@ -8,7 +8,7 @@
 
 use rustc_serialize::{json, Encodable};
 use rustc_serialize::json::Json;
-use std::io::{self, Read, ReadExt, Write, ErrorKind};
+use std::io::{self, Read, Write, ErrorKind};
 use std::net::TcpStream;
 use std::num;
 

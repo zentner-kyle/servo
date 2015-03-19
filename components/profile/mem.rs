@@ -552,7 +552,7 @@ mod system_reporter {
         use std::collections::HashMap;
         use std::collections::hash_map::Entry;
         use std::fs::File;
-        use std::io::{BufReader, BufReadExt};
+        use std::io::{BufReader, BufRead};
 
         // The first line of an entry in /proc/<pid>/smaps looks just like an entry
         // in /proc/<pid>/maps:

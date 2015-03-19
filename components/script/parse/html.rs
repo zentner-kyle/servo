@@ -39,7 +39,7 @@ use util::str::DOMString;
 use util::task_state;
 use util::task_state::IN_HTML_PARSER;
 use std::borrow::Cow;
-use std::old_io::{Writer, IoResult};
+use std::io::{self, Write};
 use url::Url;
 use html5ever::Attribute;
 use html5ever::serialize::{Serializable, Serializer, AttrRef};
@@ -188,8 +188,8 @@ impl<'a> TreeSink for servohtmlparser::Sink {
 }
 
 impl<'a> Serializable for JSRef<'a, Node> {
-    fn serialize<'wr, Wr: Writer>(&self, serializer: &mut Serializer<'wr, Wr>,
-                                  traversal_scope: TraversalScope) -> IoResult<()> {
+    fn serialize<'wr, Wr: Write>(&self, serializer: &mut Serializer<'wr, Wr>,
+                                 traversal_scope: TraversalScope) -> io::Result<()> {
         let node = *self;
         match (traversal_scope, node.type_id()) {
             (_, NodeTypeId::Element(..)) => {

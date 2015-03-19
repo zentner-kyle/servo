@@ -199,10 +199,11 @@ pub fn parse_legacy_color(mut input: &str) -> Result<RGBA,()> {
     }
 
     // Step 5.
-    match cssparser::parse_color_keyword(input) {
-        Ok(Color::RGBA(rgba)) => return Ok(rgba),
-        _ => {}
-    }
+    // XXX ICE
+    //match cssparser::parse_color_keyword(input) {
+    //    Ok(Color::RGBA(rgba)) => return Ok(rgba),
+    //    _ => {}
+    //}
 
     // Step 6.
     if input.len() == 4 {
@@ -323,7 +324,7 @@ pub struct LowercaseString {
 impl LowercaseString {
     pub fn new(s: &str) -> LowercaseString {
         LowercaseString {
-            inner: s.chars().map(|c| c.to_lowercase()).collect(),
+            inner: s.chars().flat_map(|c| c.to_lowercase()).collect(),
         }
     }
 }

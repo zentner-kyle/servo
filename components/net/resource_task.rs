@@ -48,7 +48,7 @@ pub fn global_init() {
 
     let mut lines = String::new();
     match file.read_to_string(&mut lines) {
-        Ok(()) => (),
+        Ok(_) => (),
         Err(_) => return,
     };
 

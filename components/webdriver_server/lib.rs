@@ -33,7 +33,6 @@ use util::task::spawn_named;
 use uuid::Uuid;
 
 use std::borrow::ToOwned;
-use std::net::IpAddr;
 use rustc_serialize::json::{Json, ToJson};
 use std::collections::BTreeMap;
 
@@ -41,7 +40,7 @@ pub fn start_server(port: u16, constellation_chan: ConstellationChan) {
     let handler = Handler::new(constellation_chan);
 
     spawn_named("WebdriverHttpServer".to_owned(), move || {
-        server::start(IpAddr::new_v4(0, 0, 0, 0), port, handler);
+        server::start("0.0.0.0", port, handler);
     });
 }
 

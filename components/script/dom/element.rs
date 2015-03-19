@@ -74,8 +74,8 @@ use std::ascii::AsciiExt;
 use std::borrow::{IntoCow, ToOwned};
 use std::cell::{Ref, RefMut};
 use std::default::Default;
+use std::io::Write;
 use std::mem;
-use std::old_io::{MemWriter, Writer};
 use std::sync::Arc;
 use string_cache::{Atom, Namespace, QualName};
 use url::UrlParser;
@@ -562,13 +562,13 @@ impl<'a> ElementHelpers<'a> for JSRef<'a, Element> {
 
     fn serialize(self, traversal_scope: TraversalScope) -> Fallible<DOMString> {
         let node: JSRef<Node> = NodeCast::from_ref(self);
-        let mut writer = MemWriter::new();
+        let mut writer = vec![];
         match serialize(&mut writer, &node,
                         SerializeOpts {
                             traversal_scope: traversal_scope,
                             .. Default::default()
                         }) {
-            Ok(()) => Ok(String::from_utf8(writer.into_inner()).unwrap()),
+            Ok(()) => Ok(String::from_utf8(writer).unwrap()),
             Err(_) => panic!("Cannot serialize element"),
         }
     }
