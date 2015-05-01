@@ -4,6 +4,8 @@
 
 use std::sync::mpsc::Sender;
 
+/// Front-end representation of the profiler used to communicate with the
+/// profiler.
 #[derive(Clone)]
 pub struct ProfilerChan(pub Sender<ProfilerMsg>);
 
