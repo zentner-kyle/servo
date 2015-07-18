@@ -328,4 +328,5 @@ partial interface CSSStyleDeclaration {
   [SetterThrows, TreatNullAs=EmptyString] attribute DOMString flex-shrink;
   [SetterThrows, TreatNullAs=EmptyString] attribute DOMString flexBasis;
   [SetterThrows, TreatNullAs=EmptyString] attribute DOMString flex-basis;
+  [SetterThrows, TreatNullAs=EmptyString] attribute DOMString flex;
 };
