@@ -23,6 +23,8 @@ use fragment::{Fragment, FragmentBorderBoxIterator};
 use gfx::display_list::DisplayList;
 use incremental::{REFLOW, REFLOW_OUT_OF_FLOW};
 use layout_debug;
+use style::computed_values::{box_sizing, flex_basis, flex_direction, float};
+
 use model::MaybeAuto;
 use model::{IntrinsicISizes};
 use std::cmp::max;
@@ -38,7 +40,7 @@ use util::opts;
 // The logical axises are inline and block, the flex axises are main and cross.
 // When the flex container has flex-direction: column or flex-direction: column-reverse, the main axis
 // should be block. Otherwise, it should be inline.
-#[derive(Debug)]
+#[derive(Clone, Copy, Debug)]
 enum Mode {
     Inline,
     Block
@@ -54,26 +56,90 @@ pub struct FlexFlow {
     main_mode: Mode,
 }
 
+// Returns the style struct for the properties of a flex container's fragment.
 fn flex_style(fragment: &Fragment) -> &style_structs::Flex {
     fragment.style.get_flex()
 }
 
-// TODO(zentner): This function should use flex-basis.
-fn flex_item_inline_sizes(flow: &mut Flow) -> IntrinsicISizes {
-    let _scope = layout_debug_scope!("flex::flex_item_inline_sizes");
-    debug!("flex_item_inline_sizes");
-    let base = flow::mut_base(flow);
+// Returns the style struct for the properties of a flex items's fragment.
+fn flex_item_style(fragment: &Fragment) -> &style_structs::Flex {
+    fragment.style.get_flex()
+}
 
-    debug!("FlexItem intrinsic inline sizes: {:?}, {:?}",
-           base.intrinsic_inline_sizes.minimum_inline_size,
-           base.intrinsic_inline_sizes.preferred_inline_size);
-
-    IntrinsicISizes {
-        minimum_inline_size: base.intrinsic_inline_sizes.minimum_inline_size,
-        preferred_inline_size: base.intrinsic_inline_sizes.preferred_inline_size,
+fn flex_item_compute_used_flex_basis(flow: &Flow, item_content_main_size: MaybeAuto,
+                                     container_intrinsic_size: MaybeAuto,
+                                     container_main_size: MaybeAuto) -> Au {
+    let content_size = item_content_main_size.specified_or_default(Au(0));
+    let auto_size = container_intrinsic_size.specified_or_default(content_size);
+    match flex_item_style(&flow.as_immutable_block().fragment).flex_basis {
+        flex_basis::T::Width(width) => match width {
+            LengthOrPercentageOrAuto::Auto => auto_size,
+            LengthOrPercentageOrAuto::Length(len) => len,
+            LengthOrPercentageOrAuto::Percentage(per) =>
+                if let MaybeAuto::Specified(main_size) = container_main_size {
+                    main_size.scale_by(per)
+                } else {
+                    content_size
+                }
+        },
+        flex_basis::T::Content => {
+            content_size
+        }
     }
 }
 
+fn flex_item_inline_sizes(main_mode: Mode, flow: &Flow) -> IntrinsicISizes {
+    let _scope = layout_debug_scope!("flex::flex_item_inline_sizes");
+    let intrinsic_pref_size;
+    let intrinsic_min_size;
+    {
+        let base = flow::base(flow);
+        intrinsic_min_size = base.intrinsic_inline_sizes.minimum_inline_size;
+        intrinsic_pref_size = base.intrinsic_inline_sizes.preferred_inline_size;
+    }
+
+    match main_mode {
+        Mode::Inline => {
+            let adjustment_for_box_sizing;
+            let content_inline_size;
+            {
+                let fragment = &flow.as_immutable_block().fragment;
+                adjustment_for_box_sizing = match fragment.style.get_box().box_sizing {
+                    box_sizing::T::border_box => fragment.border_padding.block_start_end(),
+                    box_sizing::T::content_box => Au(0),
+                };
+                content_inline_size = fragment.style.content_inline_size();
+            }
+            let min_basis = flex_item_compute_used_flex_basis(
+                flow,
+                MaybeAuto::Specified(intrinsic_min_size - adjustment_for_box_sizing),
+                MaybeAuto::from_style(content_inline_size, Au(0)),
+                MaybeAuto::Auto);
+            let pref_basis = flex_item_compute_used_flex_basis(
+                flow,
+                MaybeAuto::Specified(intrinsic_pref_size - adjustment_for_box_sizing),
+                MaybeAuto::from_style(content_inline_size, Au(0)),
+                MaybeAuto::Auto);
+            // TODO(zentner): Is calculating two different bases here correct?
+            // Gecko *appears* to do so, but it's logic for flex-basis is spread across several
+            // functions, making it relatively hard to understand / check for correctness.
+            IntrinsicISizes {
+                minimum_inline_size: min_basis + adjustment_for_box_sizing,
+                preferred_inline_size: pref_basis + adjustment_for_box_sizing,
+            }
+        },
+        Mode::Block => {
+            let base = flow::base(flow);
+            IntrinsicISizes {
+                minimum_inline_size: base.intrinsic_inline_sizes.minimum_inline_size,
+                preferred_inline_size: base.intrinsic_inline_sizes.preferred_inline_size,
+            }
+        }
+    }
+}
+
+
+// TODO(zentner): This function should use flex-basis.
 impl FlexFlow {
     pub fn from_fragment(fragment: Fragment,
                          flotation: Option<FloatKind>)
@@ -92,7 +158,7 @@ impl FlexFlow {
         }
     }
 
-    // TODO(zentner): This function should use flex-basis.
+
     // Currently, this is the core of BlockFlow::bubble_inline_sizes() with all float logic
     // stripped out, and max replaced with union_nonbreaking_inline.
     fn inline_mode_bubble_inline_sizes(&mut self) {
@@ -101,20 +167,21 @@ impl FlexFlow {
             _ => false,
         };
 
+        let main_mode = self.main_mode;
         let mut computation = self.block_flow.fragment.compute_intrinsic_inline_sizes();
         if !fixed_width {
-            for kid in self.block_flow.base.child_iter() {
+            for kid in flow::imm_child_iter(self as &Flow) {
+                //self.block_flow.base.imm_child_iter() {
                 let is_absolutely_positioned =
                     flow::base(kid).flags.contains(IS_ABSOLUTELY_POSITIONED);
                 if !is_absolutely_positioned {
-                    computation.union_nonbreaking_inline(&flex_item_inline_sizes(kid));
+                    computation.union_nonbreaking_inline(&flex_item_inline_sizes(main_mode, kid));
                 }
             }
         }
         self.block_flow.base.intrinsic_inline_sizes = computation.finish();
     }
 
-    // TODO(zentner): This function should use flex-basis.
     // Currently, this is the core of BlockFlow::bubble_inline_sizes() with all float logic
     // stripped out.
     fn block_mode_bubble_inline_sizes(&mut self) {
