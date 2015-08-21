@@ -61,6 +61,25 @@ struct FlexItem {
     hypothetical_main_size: Au,
 }
 
+struct MutFlowFlexItemIterator<'a> {
+    flow_it: MutFlowListIterator<'a>,
+    item_it: IterMut<'a, FlexItem>
+}
+
+impl Iterator for MutFlexItemFlowIterator {
+    type Item = (&mut Flow, &mut FlexItem);
+
+    fn next(&mut self) -> Option<Item> {
+        match (self.flow_it.next(), self.item_it.next()) {
+            (Some(flow), Some(item)) => Some((flow, item)),
+            (None, None) => None,
+            _ => {
+                panic!("There should always be the same number of flows as items");
+            }
+        }
+    }
+}
+
 /// A block with the CSS `display` property equal to `flex`.
 #[derive(Debug)]
 pub struct FlexFlow {
@@ -104,9 +123,9 @@ fn compute_definite_flex_basis(flow: &Flow, item_content_main_size: MaybeAuto,
     }
 }
 
-fn compute_flex_item_border_padding(flow: &Flow, containing_size: LogicalSize<Au>) -> LogicalMargin {
+fn compute_flex_item_border_padding(flow: &Flow, containing_size: LogicalSize<Option<Au>>) -> LogicalMargin {
     let fragment = &flow.as_immutable_block().fragment;
-    let padding = get_flex_item_padding(fragment.style(), containing_size);
+    let padding = compute_flex_item_padding(fragment.style(), containing_size);
     let border = fragment.style().logical_border_width();
     border + padding
 }
@@ -119,7 +138,7 @@ fn compute_definite_or_zero(length: LengthOrPercentageOrAuto, resolving_length: 
     compute_definite(length, resolving_length).specified_or_zero()
 }
 
-// This function is needed because, according to Section 4.2, percentage values in the top and
+// This function is needed because, according to Flexbox § 4.2, percentage values in the top and
 // bottom padding of the flex items are resolved against the flex container's block size.
 //
 // This is the second half of that text:
@@ -129,17 +148,17 @@ fn compute_definite_or_zero(length: LengthOrPercentageOrAuto, resolving_length: 
 //     containing block.
 //
 // If Tab Atkins Jr. "re-litigates" this behavior away, this function can disappear.
-fn compute_flex_item_padding(style: &ComputedValues, containing_size: LogicalSize)
+fn compute_flex_item_padding(style: &ComputedValues, containing_size: LogicalSize<Option<Au>>)
     -> LogicalMargin<Au> {
     let padding_style = style.get_padding();
     LogicalMargin::from_physical(style.writing_mode, SideOffsets2D::new(
-        compute_definite_or_zero(padding_style.padding_top, containing_size.block),
-        compute_definite_or_zero(padding_style.padding_right, containing_size.inline),
-        compute_definite_or_zero(padding_style.padding_bottom, containing_size.block),
-        compute_definite_or_zero(padding_style.padding_left, containing_size.inline)))
+        compute_definite_or_zero(padding_style.padding_top, containing_size.block.Or(Au(0))),
+        compute_definite_or_zero(padding_style.padding_right, containing_size.inline.Or(Au(0))),
+        compute_definite_or_zero(padding_style.padding_bottom, containing_size.block.Or(Au(0))),
+        compute_definite_or_zero(padding_style.padding_left, containing_size.inline.Or(Au(0)))))
 }
 
-// According to Section 4.2, flex item's do no participate in margin collapse, we can meaningfully
+// According to Flexbox § 4.2, flex item's do no participate in margin collapse, we can meaningfully
 // calculate the margin of each flex item separately.
 // Note that the rules here are different from block layout, like in the previous function.
 fn compute_flex_item_margin(style: &ComputedValues, containing_size: LogicalSize)
@@ -264,7 +283,6 @@ impl FlexItem {
 
 }
 
-// TODO(zentner): This function should use flex-basis.
 impl FlexFlow {
     pub fn from_fragment(fragment: Fragment,
                          flotation: Option<FloatKind>)
@@ -293,36 +311,50 @@ impl FlexFlow {
         this
     }
 
-    // This function implements Flexbox 9.2.3
-    fn flex_item_compute_base_size(&self, flow: &Flow, containing_size:
-                                   LogicalSize<Au>) -> MaybeAuto {
-        // The result of Flexbox 9.2.2 is stored in containing_size.
+    fn iter_mut_flows_and_items(&mut self) -> MutFlowFlexItemIterator {
+        MutFlowFlexItemIterator {
+            flow_it: self.block_flow.base.child_iter(),
+            item_it: self.items.iter_mut()
+        }
+    }
 
+    // This function implements Flexbox § 9.2.3
+    fn compute_flex_items_base_sizes(&mut self, available_space: LogicalSize<Option<Au>>) {
         let main_mode = self.main_mode;
         let self_wm = get_frag(self).style.writing_mode;
 
+        for (flow, item) in self.iter_mut_flows_and_items() {
+            item.base_size = flex_item_compute_base_size(main_mode, self_wm, flow, available_space);
+            item.hypothetical_main_size = clamp_axis(main_mode, flow, item.base_size);
+        }
+    }
+
+    fn flex_item_compute_base_size(main_mode: Mode, self_wm: WritingMode, flow: &Flow,
+                                   available_space: LogicalSize<Option<Au>>) -> Au {
+        // The result of Flexbox § 9.2.2 is stored in available_space.
+
         let basis = get_used_flex_basis(main_mode, get_frag(flow));
-        let containing_main_size = get_axis_from_size(main_mode, containing_size);
+        let available_main_size = get_axis_from_size(main_mode, available_space);
         let item_wm = get_frag(flow).style.writing_mode;
 
-        // Flexbox 9.2.3.A:
+        // Flexbox § 9.2.3.A:
         if let flex_basis::T::Width(width) = basis {
-            match (width, containing_main_size) {
+            match (width, available_main_size) {
                 (Length(len), _) => { return len; },
                 (Percentage(per), Some(len)) => { return len.scale_by(per); },
                 _ => {}
             }
         }
 
-        // Flexbox 9.2.3.B:
+        // Flexbox § 9.2.3.B:
         if let (Some(aspect_ratio), flex_basis::T::Content, Some(size)) =
             (get_aspect_ratio(flow), basis, get_definite_cross_size(main_mode.other(), flow,
-                                                                    containing_size)) {
+                                                                    available_space)) {
             return size;
         }
 
-        // Flexbox 9.2.3.C:
-        match (basis, self.main_size_constraint) {
+        // Flexbox § 9.2.3.C:
+        match (basis, None /* If the flex container is being sized under a min-content or max-content constraint. */) {
             (flex_basis::T::Content | flex_basis::T::Width(LengthOrPercentageOrAuto::Auto),
              Some(len)) => {
                 // FIXME(zentner): I don't think that this is correct.
@@ -332,8 +364,8 @@ impl FlexFlow {
             _ = {}
         }
 
-        // Flexbox 9.2.3.D:
-        match (basis, containing_main_size, main_mode.is_vertical(self_wm) == item_wm.is_vertical())  {
+        // Flexbox § 9.2.3.D:
+        match (basis, available_main_size, main_mode.is_vertical(self_wm) == item_wm.is_vertical())  {
             (flex_basis::T::Content | flex_basis::T::Width(LengthOrPercentageOrAuto::Percentage(_)),
             None,
             true) => {
@@ -344,22 +376,19 @@ impl FlexFlow {
             _ => {}
         }
 
-        // Flexbox 9.2.3.E
+        // Flexbox § 9.2.3.E
 
     }
 
-    fn compute_flex(&mut self, size: LogicalSize<Au>) {
-        // Flexbox Section 9.2 has already been done at this point.
-        // The results of that section have been stored in `size`.
+    // TODO(zentner): Can we avoid calculating these twice?
+    fn update_item_border_padding(&mut self, containing_size: LogicalSize<Option<Au>>) {
         for kid in self.block_flow.base.child_iter() {       
-            self.update_fragment_border_padding_margin(kid, size);
+            self.update_fragment_border_padding_margin(kid, containing_size);
         }
-
-        // Flexbox Section 9.3: Determine flex items' base and hypothetical main size.
     }
 
     // Update a child flow's fragment's border_padding, and margin once we know our own size.
-    fn update_fragment_border_padding_margin(&self, flow: &mut Flow, containing_size: LogicalSize<Au>) {
+    fn update_fragment_border_padding_margin(&self, flow: &mut Flow, containing_size: LogicalSize<Option<Au>>) {
         let border_padding : LogicalMargin<Au>;
         let margin : LogicalMargin<Au>;
         {
@@ -474,8 +503,6 @@ impl FlexFlow {
                                        inline_start_content_edge: Au,
                                        _inline_end_content_edge: Au,
                                        content_inline_size: Au) {
-        let _scope = layout_debug_scope!("flex::inline_mode_assign_inline_sizes");
-        debug!("inline_mode_assign_inline_sizes");
 
         debug!("content_inline_size = {:?}", content_inline_size);
 
@@ -567,6 +594,22 @@ impl FlexFlow {
             flow::mut_base(kid).position.size.block = block_size
         }
     }
+
+    // Flexbox § 9.2.2: Determine the available main and cross space for the flex items:
+    fn compute_available_space(&self) -> LogicalSize<Option<Au>> {
+        // TODO(zentner): Does this handle `box-sizing` correctly?
+        let inline_border_padding = self.block_flow.fragment.border_padding.inline_start_end();
+        let available_inline_size = Some(self.block_flow.fragment.border_box.size.inline -
+                                         padding_and_borders);
+        let available_block_size = match self.block_flow.fragment.style().get_box().width {
+            LengthOrPercentageOrAuto::Length(len) => {
+                let block_border_padding = self.block_flow.fragment.border_padding.block_start_end();
+                Some(len - block_border_padding)
+            },
+            _ => None
+        }
+        LogicalSize::new(available_inline_size, available_block_size)
+    }
 }
 
 impl Flow for FlexFlow {
@@ -623,37 +666,27 @@ impl Flow for FlexFlow {
 
     fn assign_inline_sizes(&mut self, layout_context: &LayoutContext) {
         let _scope = layout_debug_scope!("flex::assign_inline_sizes {:x}", self.block_flow.base.debug_id());
-        debug!("assign_inline_sizes");
 
         if !self.block_flow.base.restyle_damage.intersects(REFLOW_OUT_OF_FLOW | REFLOW) {
             return
         }
 
-        // Our inline-size was set to the inline-size of the containing block by the flow's parent.
-        // Now compute the real value.
         let containing_block_inline_size = self.block_flow.base.block_container_inline_size;
-        self.block_flow.compute_used_inline_size(layout_context, containing_block_inline_size);
-        if self.block_flow.base.flags.is_float() {
-            self.block_flow.float.as_mut().unwrap().containing_inline_size = containing_block_inline_size
-        }
+
+        let available_space = self.compute_available_space();
+
+        // TODO(zentner): Shouldn't this be called later? We usually don't know our block size yet.
+        self.update_item_border_padding(available_space);
 
         // Move in from the inline-start border edge.
         let inline_start_content_edge = self.block_flow.fragment.border_box.start.i +
             self.block_flow.fragment.border_padding.inline_start;
-
-        debug!("inline_start_content_edge = {:?}", inline_start_content_edge);
-
-        let padding_and_borders = self.block_flow.fragment.border_padding.inline_start_end();
 
         // Distance from the inline-end margin edge to the inline-end content edge.
         let inline_end_content_edge =
             self.block_flow.fragment.margin.inline_end +
             self.block_flow.fragment.border_padding.inline_end;
 
-        debug!("padding_and_borders = {:?}", padding_and_borders);
-        debug!("self.block_flow.fragment.border_box.size.inline = {:?}",
-               self.block_flow.fragment.border_box.size.inline);
-        let content_inline_size = self.block_flow.fragment.border_box.size.inline - padding_and_borders;
 
         match self.main_mode {
             Mode::Inline =>
@@ -666,6 +699,11 @@ impl Flow for FlexFlow {
                                                     inline_start_content_edge,
                                                     inline_end_content_edge,
                                                     content_inline_size)
+        }
+
+        // We've computed our inline size, as well as the inline size of all our children.
+        if self.block_flow.base.flags.is_float() {
+            self.block_flow.float.as_mut().unwrap().containing_inline_size = size.inline;
         }
     }
 
