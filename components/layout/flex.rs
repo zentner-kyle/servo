@@ -198,7 +198,7 @@ fn get_item_definite_content_size(mode: Mode, flow: &Flow, containing_size: Logi
 }
 
 fn get_aspect_ratio (flow: &Flow) -> Option<CSSFloat> {
-    // TODO(zentner): Use flex items' intrinsic aspect ratios.
+    // TODO(zentner): Use flex item's intrinsic aspect ratios.
     None
 }
 
@@ -213,6 +213,9 @@ fn get_definite_cross_size(cross_mode: Mode, flow: &Flow, containing_size: Logic
     }
 }
 
+// Compute the *used* `flex-basis`, which is dependent on the main size, and different from the
+// computed `flex-basis`.
+// Note that unlike the computed value, the used `flex-basis` will never be `auto`.
 fn get_used_flex_basis(mode: Mode, fragment: &Fragment) {
     let basis = flex_item_style(fragment.style).flex_basis;
     //{
@@ -330,9 +333,10 @@ impl FlexFlow {
     }
 
     fn flex_item_compute_base_size(main_mode: Mode, self_wm: WritingMode, flow: &Flow,
-                                   available_space: LogicalSize<Option<Au>>) -> Au {
+                                   available_space: LogicalSize<Option<Au>>) -> Option<Au> {
         // The result of Flexbox § 9.2.2 is stored in available_space.
 
+        // Note that the *used* `flex-basis` cannot be `auto`.
         let basis = get_used_flex_basis(main_mode, get_frag(flow));
         let available_main_size = get_axis_from_size(main_mode, available_space);
         let item_wm = get_frag(flow).style.writing_mode;
@@ -340,8 +344,8 @@ impl FlexFlow {
         // Flexbox § 9.2.3.A:
         if let flex_basis::T::Width(width) = basis {
             match (width, available_main_size) {
-                (Length(len), _) => { return len; },
-                (Percentage(per), Some(len)) => { return len.scale_by(per); },
+                (Length(len), _) => { return Some(len); },
+                (Percentage(per), Some(len)) => { return Some(len.scale_by(per)); },
                 _ => {}
             }
         }
@@ -350,7 +354,7 @@ impl FlexFlow {
         if let (Some(aspect_ratio), flex_basis::T::Content, Some(size)) =
             (get_aspect_ratio(flow), basis, get_definite_cross_size(main_mode.other(), flow,
                                                                     available_space)) {
-            return size;
+            return Some(size);
         }
 
         // Flexbox § 9.2.3.C:
@@ -359,7 +363,7 @@ impl FlexFlow {
              Some(len)) => {
                 // FIXME(zentner): I don't think that this is correct.
                 // TODO(zentner): Find out what "size the item under that constraint" means.
-                return len;
+                return Some(len);
             },
             _ = {}
         }
@@ -371,13 +375,39 @@ impl FlexFlow {
             true) => {
                 // Lay out the item using the rules for a box in an orthogonal flow.
                 // Return the item's max-content main size.
-                return get_axis_from_size(main_mode, layout_orthogonal_flow(flow));
-            }
+                return Some(get_axis_from_size(main_mode, layout_orthogonal_flow(flow)));
+            },
             _ => {}
         }
 
         // Flexbox § 9.2.3.E
 
+        // This is the fallback case. It is supposed to handle having a finite available main
+        // space.
+
+        // We're supposed to "size the item into the available space using its used flex basis in
+        // place of its main size." Since all of our children are blocks, we can compute this here
+        // if we have a definite `flex-basis`, or if we're a row (because we can use the item's
+        // intrinsic inline sizes).
+        match (basis, available_main_size) {
+            (flex_basis::T::Width(LengthOrPercentageOrAuto::Percentage(per)), Some(len)) => {
+                return Some(len.scale_by(per));
+            },
+            (flex_basis::T::Width(LengthOrPercentageOrAuto::Length(len)), _) => {
+                return Some(len);
+            },
+            _ => {},
+        }
+
+        // We can use the item's minimum inline size as the base main size.
+        if main_mode == Mode::Inline {
+            return Some(flow::base(flow).base.intrinsic_inline_sizes.minimum_inline_size);
+        }
+
+        // We couldn't compute our item's base main size here. This implies that the 
+        // , so we need to get the main size from
+        // the 
+        return None;
     }
 
     // TODO(zentner): Can we avoid calculating these twice?
