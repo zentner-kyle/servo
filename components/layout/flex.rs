@@ -10,7 +10,8 @@ use app_units::Au;
 use block::BlockFlow;
 use context::LayoutContext;
 use display_list_builder::FlexFlowDisplayListBuilding;
-use euclid::{Point2D, Rect};
+//use euclid::{Size2D, Point2D, SideOffsets2D, Rect};
+use euclid::{Point2D, Rect, SideOffsets2D};
 use floats::FloatKind;
 use flow;
 use flow::INLINE_POSITION_IS_STATIC;
@@ -19,6 +20,7 @@ use flow::ImmutableFlowUtils;
 use flow::mut_base;
 use flow::{Flow, FlowClass, OpaqueFlow};
 use flow::{HAS_LEFT_FLOATED_DESCENDANTS, HAS_RIGHT_FLOATED_DESCENDANTS};
+use flow_list::{FlowList, FlowListIterator, MutFlowListIterator};
 use fragment::{Fragment, FragmentBorderBoxIterator};
 use gfx::display_list::DisplayList;
 use incremental::{REFLOW, REFLOW_OUT_OF_FLOW};
@@ -28,13 +30,16 @@ use style::computed_values::{box_sizing, flex_basis, flex_direction, float};
 use model::MaybeAuto;
 use model::{IntrinsicISizes};
 use std::cmp::max;
+use std::slice::IterMut;
 use std::sync::Arc;
-use style::computed_values::{flex_direction, float};
 use style::properties::ComputedValues;
 use style::properties::style_structs;
+use style::values::CSSFloat;
+use style::values::computed;
 use style::values::computed::LengthOrPercentageOrAuto;
 use util::geometry::Au;
-use util::logical_geometry::{LogicalSize, WritingMode};
+//use util::logical_geometry::{WritingMode, LogicalSize, LogicalPoint, , LogicalRect};
+use util::logical_geometry::{LogicalSize, WritingMode, LogicalMargin};
 use util::opts;
 
 // A mode describes which logical axis a flex axis is parallel with.
@@ -56,6 +61,7 @@ impl Mode {
     }
 }
 
+#[derive(Debug)]
 struct FlexItem {
     base_size: Au,
     hypothetical_main_size: Au,
@@ -66,10 +72,10 @@ struct MutFlowFlexItemIterator<'a> {
     item_it: IterMut<'a, FlexItem>
 }
 
-impl Iterator for MutFlexItemFlowIterator {
-    type Item = (&mut Flow, &mut FlexItem);
+impl<'a> Iterator for MutFlowFlexItemIterator<'a> {
+    type Item = (&'a mut Flow, &'a mut FlexItem);
 
-    fn next(&mut self) -> Option<Item> {
+    fn next(&mut self) -> Option<Self::Item> {
         match (self.flow_it.next(), self.item_it.next()) {
             (Some(flow), Some(item)) => Some((flow, item)),
             (None, None) => None,
@@ -106,7 +112,7 @@ fn compute_definite_flex_basis(flow: &Flow, item_content_main_size: MaybeAuto,
                                container_main_size: MaybeAuto) -> Au {
     let content_size = item_content_main_size.specified_or_default(Au(0));
     let auto_size = container_intrinsic_size.specified_or_default(content_size);
-    match flex_item_style(&flow.as_immutable_block().fragment.style).flex_basis {
+    match flex_item_style(&flow.as_block().fragment.style).flex_basis {
         flex_basis::T::Width(width) => match width {
             LengthOrPercentageOrAuto::Auto => auto_size,
             LengthOrPercentageOrAuto::Length(len) => len,
@@ -123,8 +129,8 @@ fn compute_definite_flex_basis(flow: &Flow, item_content_main_size: MaybeAuto,
     }
 }
 
-fn compute_flex_item_border_padding(flow: &Flow, containing_size: LogicalSize<Option<Au>>) -> LogicalMargin {
-    let fragment = &flow.as_immutable_block().fragment;
+fn compute_flex_item_border_padding(flow: &Flow, containing_size: LogicalSize<Option<Au>>) -> LogicalMargin<Au> {
+    let fragment = &flow.as_block().fragment;
     let padding = compute_flex_item_padding(fragment.style(), containing_size);
     let border = fragment.style().logical_border_width();
     border + padding
@@ -161,7 +167,7 @@ fn compute_flex_item_padding(style: &ComputedValues, containing_size: LogicalSiz
 // According to Flexbox § 4.2, flex item's do no participate in margin collapse, we can meaningfully
 // calculate the margin of each flex item separately.
 // Note that the rules here are different from block layout, like in the previous function.
-fn compute_flex_item_margin(style: &ComputedValues, containing_size: LogicalSize)
+fn compute_flex_item_margin(style: &ComputedValues, containing_size: LogicalSize<Option<Au>>)
     -> LogicalMargin<Au> {
     let margin = style.logical_margin();
     LogicalMargin::new(style.writing_mode,
@@ -172,15 +178,15 @@ fn compute_flex_item_margin(style: &ComputedValues, containing_size: LogicalSize
 }
 
 fn get_box_sizing_adjustment(mode: Mode, flow: &Flow, containing_size: LogicalSize<Au>) -> Au {
-    let fragment = &flow.as_immutable_block().fragment;
+    let fragment = &flow.as_block().fragment;
     match fragment.style.get_box().box_sizing {
         box_sizing::T::border_box =>
-            get_axis_from_size(mode, get_flex_item_border_padding(flow, containing_size)),
+            get_axis_from_size(mode, compute_flex_item_border_padding(flow, containing_size)),
         box_sizing::T::content_box => Au(0)
     }
 }
 
-fn get_axis_from_size(mode: Mode, size: LogicalSize<Au>) -> Au {
+fn get_axis_from_size<U>(mode: Mode, size: LogicalSize<U>) -> U {
     match mode {
         Mode::Inline => size.inline,
         Mode::Block  => size.block
@@ -197,9 +203,17 @@ fn get_item_definite_content_size(mode: Mode, flow: &Flow, containing_size: Logi
     }
 }
 
-fn get_aspect_ratio (flow: &Flow) -> Option<CSSFloat> {
+fn get_aspect_ratio(flow: &Flow) -> Option<CSSFloat> {
     // TODO(zentner): Use flex item's intrinsic aspect ratios.
     None
+}
+
+fn size_orthogonal_flow(item_wm: WritingMode, available_space: LogicalSize<Option<Au>>, flow: &Flow) -> LogicalSize<Au> {
+    // TODO(zentner): Layout flex items "using the rules for a box in an orthogonal flow"
+    // As far as I can tell from examining Gecko, layout in an othogonal flow only involves
+    // constraining the available inline size of the child to the available block size calculated
+    // from the parent.
+    LogicalSize::new(item_wm, available_space.block, available_space.inline)
 }
 
 fn get_definite_cross_size(cross_mode: Mode, flow: &Flow, containing_size: LogicalSize<Au>) -> Option<Au> {
@@ -227,12 +241,12 @@ fn get_used_flex_basis(mode: Mode, fragment: &Fragment) {
     };
     match (basis, main_size) {
         (flex_basis::T::Content, _) => flex_basis::T::Content,
-        (flex_basis::T::Width(Auto), computed::LengthOrPercentageOrAuto::Auto) => flex_basis::T::Content,
+        (flex_basis::T::Width(Auto), LengthOrPercentageOrAuto::Auto) => flex_basis::T::Content,
         (basis, _) => basis
     }
 }
 
-fn get_frag(flow: &Flow) -> &Fragment {
+fn get_frag<'a>(flow: &'a Flow) -> &'a Fragment {
     &flow.as_immutable_block().fragment
 }
 
@@ -276,6 +290,27 @@ fn flex_item_intrinsic_inline_sizes(flow: &Flow) -> IntrinsicISizes {
     }
 }
 
+fn clamp_axis(main_mode: Mode, flow: &Flow, base_size: Option<Au>) -> Au {
+    fn clamp_au(min: Au, preferred: Option<Au>, max: Au) -> Au {
+        let preferred = preferred.or(Au(0));
+        if preferred < min {
+            min
+        } else if preferred > max {
+            max
+        } else {
+            preferred
+        }
+    }
+    match main_mode {
+        Mode::Inline => clamp_au(flow.fragment.style.min_inline_size(),
+                                 base_size,
+                                 flow.fragment.style.max_inline_size()),
+        Mode::Block => clamp_au(flow.fragment.style.min_block_size(),
+                                base_size,
+                                flow.fragment.style.max_block_size())
+    }
+}
+
 impl FlexItem {
     fn zero() -> FlexItem {
         FlexItem {
@@ -304,7 +339,7 @@ impl FlexFlow {
             items: Vec::new()
         };
 
-        let child_count = ImmutableFlowUtils::child_count(self as &Flow);
+        let child_count = ImmutableFlowUtils::child_count(this as &Flow);
 
         this.items.reserve(child_count);
         for _ in (0..child_count) {
@@ -327,7 +362,7 @@ impl FlexFlow {
         let self_wm = get_frag(self).style.writing_mode;
 
         for (flow, item) in self.iter_mut_flows_and_items() {
-            item.base_size = flex_item_compute_base_size(main_mode, self_wm, flow, available_space);
+            item.base_size = Self::flex_item_compute_base_size(main_mode, self_wm, flow, available_space);
             item.hypothetical_main_size = clamp_axis(main_mode, flow, item.base_size);
         }
     }
@@ -344,8 +379,8 @@ impl FlexFlow {
         // Flexbox § 9.2.3.A:
         if let flex_basis::T::Width(width) = basis {
             match (width, available_main_size) {
-                (Length(len), _) => { return Some(len); },
-                (Percentage(per), Some(len)) => { return Some(len.scale_by(per)); },
+                (LengthOrPercentageOrAuto::Length(len), _) => { return Some(len); },
+                (LengthOrPercentageOrAuto::Percentage(per), Some(len)) => { return Some(len.scale_by(per)); },
                 _ => {}
             }
         }
@@ -359,23 +394,22 @@ impl FlexFlow {
 
         // Flexbox § 9.2.3.C:
         match (basis, None /* If the flex container is being sized under a min-content or max-content constraint. */) {
-            (flex_basis::T::Content | flex_basis::T::Width(LengthOrPercentageOrAuto::Auto),
-             Some(len)) => {
+            (flex_basis::T::Content, Some(len)) |
+            (flex_basis::T::Width(LengthOrPercentageOrAuto::Auto), Some(len)) => {
                 // FIXME(zentner): I don't think that this is correct.
                 // TODO(zentner): Find out what "size the item under that constraint" means.
                 return Some(len);
             },
-            _ = {}
+            _ => {}
         }
 
         // Flexbox § 9.2.3.D:
         match (basis, available_main_size, main_mode.is_vertical(self_wm) == item_wm.is_vertical())  {
-            (flex_basis::T::Content | flex_basis::T::Width(LengthOrPercentageOrAuto::Percentage(_)),
-            None,
-            true) => {
+            (flex_basis::T::Content, None, true) |
+            (flex_basis::T::Width(LengthOrPercentageOrAuto::Percentage(_)), None, true) => {
                 // Lay out the item using the rules for a box in an orthogonal flow.
                 // Return the item's max-content main size.
-                return Some(get_axis_from_size(main_mode, layout_orthogonal_flow(flow)));
+                return get_axis_from_size(main_mode, size_orthogonal_flow(item_wm, available_space, flow));
             },
             _ => {}
         }
@@ -630,14 +664,14 @@ impl FlexFlow {
         // TODO(zentner): Does this handle `box-sizing` correctly?
         let inline_border_padding = self.block_flow.fragment.border_padding.inline_start_end();
         let available_inline_size = Some(self.block_flow.fragment.border_box.size.inline -
-                                         padding_and_borders);
+                                         inline_border_padding);
         let available_block_size = match self.block_flow.fragment.style().get_box().width {
             LengthOrPercentageOrAuto::Length(len) => {
                 let block_border_padding = self.block_flow.fragment.border_padding.block_start_end();
                 Some(len - block_border_padding)
             },
             _ => None
-        }
+        };
         LogicalSize::new(available_inline_size, available_block_size)
     }
 }
@@ -717,6 +751,8 @@ impl Flow for FlexFlow {
             self.block_flow.fragment.margin.inline_end +
             self.block_flow.fragment.border_padding.inline_end;
 
+        let padding_and_borders = self.block_flow.fragment.border_padding.inline_start_end();
+        let content_inline_size = self.block_flow.fragment.border_box.size.inline - padding_and_borders;
 
         match self.main_mode {
             Mode::Inline =>
@@ -733,7 +769,7 @@ impl Flow for FlexFlow {
 
         // We've computed our inline size, as well as the inline size of all our children.
         if self.block_flow.base.flags.is_float() {
-            self.block_flow.float.as_mut().unwrap().containing_inline_size = size.inline;
+            self.block_flow.float.as_mut().unwrap().containing_inline_size = self.block_flow.fragment.border_box.size.inline;
         }
     }
 
