@@ -1303,6 +1303,18 @@
             "url": "/_mozilla/css/fixed_width_overrides_child_intrinsic_width_a.html"
           }
         ],
+        "css/flex_absolute_position.html": [
+          {
+            "path": "css/flex_absolute_position.html",
+            "references": [
+              [
+                "/_mozilla/css/flex_absolute_position_ref.html",
+                "=="
+              ]
+            ],
+            "url": "/_mozilla/css/flex_absolute_position.html"
+          }
+        ],
         "css/flex_column_direction.html": [
           {
             "path": "css/flex_column_direction.html",
@@ -7174,6 +7186,18 @@
             ]
           ],
           "url": "/_mozilla/css/fixed_width_overrides_child_intrinsic_width_a.html"
+        }
+      ],
+      "css/flex_absolute_position.html": [
+        {
+          "path": "css/flex_absolute_position.html",
+          "references": [
+            [
+              "/_mozilla/css/flex_absolute_position_ref.html",
+              "=="
+            ]
+          ],
+          "url": "/_mozilla/css/flex_absolute_position.html"
         }
       ],
       "css/flex_column_direction.html": [
