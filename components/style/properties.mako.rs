@@ -314,7 +314,7 @@ pub mod longhands {
             }
 
             pub mod computed_value {
-                #[derive(Clone, PartialEq, HeapSizeOf)]
+                #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, HeapSizeOf)]
                 pub struct T(pub Option<${type}>);
             }
 
