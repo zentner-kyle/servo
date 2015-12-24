@@ -221,7 +221,7 @@ impl FlexFlow {
         let containing_block_mode = self.block_flow.base.writing_mode;
 
         let block_container_explicit_block_size = self.block_flow.base.block_container_explicit_block_size;
-        for (kid, item) in self.item_iter_mut() {
+        for (kid, _) in self.item_iter_mut() {
             // The inline-start margin edge of the child flow is at our inline-start content edge,
             // and its inline-size is our content inline-size.
             {
@@ -261,7 +261,7 @@ impl FlexFlow {
 
         let block_container_explicit_block_size = self.block_flow.base.block_container_explicit_block_size;
         let mut inline_child_start = inline_start_content_edge;
-        for (kid, item) in self.item_iter_mut() {
+        for (kid, _) in self.item_iter_mut() {
             let kid_base = flow::mut_base(kid);
 
             kid_base.block_container_inline_size = even_content_inline_size;
